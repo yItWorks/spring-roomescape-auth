@@ -16,7 +16,6 @@
   const summaryTheme = document.getElementById("summary-theme");
   const summaryDate = document.getElementById("summary-date");
   const timeSelect = document.getElementById("time-select");
-  const nameInput = document.getElementById("name-input");
   const reserveForm = document.getElementById("reserve-form");
   const reserveMessage = document.getElementById("reserve-message");
   const btnBackThemes = document.getElementById("btn-back-to-themes");
@@ -349,7 +348,6 @@
     summaryDate.textContent = dateStr;
     reserveMessage.textContent = "";
     reserveMessage.className = "message";
-    nameInput.value = "";
     timeSelect.innerHTML = "";
     try {
       const slots = await fetchJson(
@@ -393,24 +391,35 @@
     reserveMessage.textContent = "";
     reserveMessage.className = "message";
 
-    if (!localStorage.getItem("token")) {
+    const token = localStorage.getItem("token");
+    if (!token) {
       loginModal.classList.remove("is-hidden");
       return;
     }
 
     if (!state.selectedTheme || !state.selectedDate) return;
     const timeId = Number(timeSelect.value, 10);
-    const name = nameInput.value.trim();
-    if (!timeId || !name) return;
+
+    if (!timeId) return;
+
+    let memberId;
+    try {
+      const payload = JSON.parse(atob(token.split('.')[1]));
+      memberId = Number(payload.sub);
+    } catch (e) {
+      reserveMessage.textContent = "토큰 정보가 올바르지 않습니다. 다시 로그인해주세요.";
+      reserveMessage.classList.add("message--err");
+      return;
+    }
     try {
       await fetchJson("/reservations", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          name,
           date: state.selectedDate,
           timeId,
           themeId: state.selectedTheme.id,
+          memberId: memberId
         }),
       });
       reserveMessage.textContent = "예약이 완료되었습니다.";
