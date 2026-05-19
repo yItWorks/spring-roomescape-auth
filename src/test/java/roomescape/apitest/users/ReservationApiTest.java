@@ -82,7 +82,7 @@ class ReservationApiTest {
                 .extract().jsonPath();
 
         List<Long> idsByMemberId = jsonPath.getList("id", Long.class);
-        List<Long> memberIds = jsonPath.getList("memberResponse.id", Long.class);
+        List<Long> memberIds = jsonPath.getList("member.id", Long.class);
 
         assertThat(idsByMemberId)
                 .hasSize(initialReservationSize + 1)
@@ -121,7 +121,7 @@ class ReservationApiTest {
                 .when().put("/reservations/" + id)
                 .then().log().all()
                 .statusCode(200)
-                .extract().jsonPath().getLong("timeResponse.id");
+                .extract().jsonPath().getLong("time.id");
 
         assertThat(updatedTimeId).isEqualTo(timeId);
     }
