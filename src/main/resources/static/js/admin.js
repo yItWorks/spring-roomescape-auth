@@ -1,9 +1,6 @@
 (function () {
   "use strict";
 
-  const THEME_LIST_LIMIT = 500;
-
-  // --- 요소 셀렉터 ---
   const themeCreateForm = document.getElementById("theme-create-form");
   const themeName = document.getElementById("theme-name");
   const themeDesc = document.getElementById("theme-desc");
@@ -24,6 +21,73 @@
   const refreshReservations = document.getElementById("refresh-reservations");
   const reservationsMsg = document.getElementById("reservations-msg");
 
+  // --- 관리자 인증 흐름 ---
+  const navLogin = document.getElementById("nav-login");
+  const navLogout = document.getElementById("nav-logout");
+  const loginModal = document.getElementById("login-modal");
+  const loginForm = document.getElementById("login-form");
+  const loginCancel = document.getElementById("login-cancel");
+  const loginMsg = document.getElementById("login-msg");
+
+  function updateAuthUI() {
+    const hasToken = !!localStorage.getItem("token");
+    if (navLogin) navLogin.classList.toggle("is-hidden", hasToken);
+    if (navLogout) navLogout.classList.toggle("is-hidden", !hasToken);
+  }
+
+  if (navLogin) {
+    navLogin.addEventListener("click", (e) => {
+      e.preventDefault();
+      loginModal.classList.remove("is-hidden");
+    });
+  }
+
+  if (loginCancel) {
+    loginCancel.addEventListener("click", () => {
+      loginModal.classList.add("is-hidden");
+      loginMsg.textContent = "";
+    });
+  }
+
+  if (navLogout) {
+    navLogout.addEventListener("click", async (e) => {
+      e.preventDefault();
+      try { await fetch("/logout", { method: "POST" }); } catch (err) {}
+      localStorage.removeItem("token");
+      updateAuthUI();
+      reservationsBody.innerHTML = '<tr><td colspan="5">예약 목록을 보려면 로그인하세요.</td></tr>';
+      alert("로그아웃 되었습니다.");
+    });
+  }
+
+  if (loginForm) {
+    loginForm.addEventListener("submit", async (e) => {
+      e.preventDefault();
+      loginMsg.textContent = "";
+      loginMsg.classList.remove("message--err");
+      const id = document.getElementById("login-id").value;
+      const pw = document.getElementById("login-pw").value;
+
+      try {
+        const res = await fetch("/login", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ loginId: id, password: pw }),
+        });
+        if (!res.ok) throw new Error("로그인 실패");
+        const data = await res.json();
+        localStorage.setItem("token", data.accessToken || data.token);
+        loginModal.classList.add("is-hidden");
+        updateAuthUI();
+        loadReservations(); // 로그인 완료 후 목록 재조회
+      } catch (err) {
+        loginMsg.textContent = "로그인 정보가 올바르지 않습니다.";
+        loginMsg.classList.add("message--err");
+      }
+    });
+  }
+  updateAuthUI();
+
   // --- 유틸리티 함수 ---
   function setMsg(el, text, ok) {
     if (!el) return;
@@ -32,9 +96,14 @@
     if (text) el.classList.add(ok ? "message--ok" : "message--err");
   }
 
-  async function fetchJson(url, options) {
-    const res = await fetch(url, options);
+  async function fetchJson(url, options = {}) {
+    const headers = options.headers || {};
+    const token = localStorage.getItem("token");
+    if (token) headers["Authorization"] = `Bearer ${token}`;
+
+    const res = await fetch(url, { ...options, headers });
     if (!res.ok) {
+      if (res.status === 401) throw new Error("UNAUTHORIZED");
       const t = await res.text();
       throw new Error(t || res.statusText);
     }
@@ -50,7 +119,7 @@
     return `${parts[0]}:${parts[1] || "00"}`;
   }
 
-  // --- 테마 관리 로직 (서버 데이터만 사용)[cite: 14] ---
+  // --- 테마 관리 로직 ---
   async function loadThemesIntoDeleteSelect() {
     themeDeleteSelect.innerHTML = "";
     try {
@@ -88,14 +157,27 @@
       formData.append("description", themeDesc.value.trim());
       formData.append("file", file);
 
-      const res = await fetch("/admin/themes", { method: "POST", body: formData });
-      if (!res.ok) throw new Error(await res.text() || "등록 실패");
+      // FormData 전송 시에도 토큰 필요 (Admin 컨트롤러는 설정에 따라 다를 수 있으나 범용 적용)
+      const headers = {};
+      const token = localStorage.getItem("token");
+      if (token) headers["Authorization"] = `Bearer ${token}`;
+
+      const res = await fetch("/admin/themes", { method: "POST", body: formData, headers });
+      if (!res.ok) {
+        if (res.status === 401) throw new Error("UNAUTHORIZED");
+        throw new Error(await res.text() || "등록 실패");
+      }
 
       setMsg(themeCreateMsg, "테마가 등록되었습니다.", true);
       themeCreateForm.reset();
-      await loadThemesIntoDeleteSelect(); // 등록 후 목록 갱신
+      await loadThemesIntoDeleteSelect();
     } catch (e) {
-      setMsg(themeCreateMsg, e.message, false);
+      if (e.message === "UNAUTHORIZED") {
+        setMsg(themeCreateMsg, "권한이 만료되었습니다. 다시 로그인 해주세요.", false);
+        loginModal.classList.remove("is-hidden");
+      } else {
+        setMsg(themeCreateMsg, e.message, false);
+      }
     }
   });
 
@@ -105,13 +187,13 @@
     try {
       await fetchJson(`/admin/themes/${id}`, { method: "DELETE" });
       setMsg(themeDeleteMsg, "삭제되었습니다.", true);
-      await loadThemesIntoDeleteSelect(); // 삭제 후 목록 갱신
+      await loadThemesIntoDeleteSelect();
     } catch (e) {
       setMsg(themeDeleteMsg, "삭제 실패", false);
     }
   });
 
-  // --- 시간 및 예약 관리 로직 (기존 유지)[cite: 14] ---
+  // --- 시간 및 예약 관리 로직 ---
   async function loadTimesIntoDeleteSelect() {
     if (!timeDeleteSelect) return;
     timeDeleteSelect.innerHTML = "";
@@ -158,7 +240,7 @@
     const id = timeDeleteSelect.value;
     if (!id || !confirm("삭제하시겠습니까?")) return;
     try {
-      await fetch(`/admin/times/${id}`, { method: "DELETE" });
+      await fetchJson(`/admin/times/${id}`, { method: "DELETE" });
       setMsg(timeDeleteMsg, "삭제되었습니다.", true);
       await loadTimesIntoDeleteSelect();
     } catch (e) {
@@ -187,7 +269,11 @@
         reservationsBody.appendChild(tr);
       });
     } catch (e) {
-      setMsg(reservationsMsg, "로드 실패", false);
+      if (e.message === "UNAUTHORIZED") {
+        reservationsBody.innerHTML = '<tr><td colspan="5">예약 목록을 보려면 로그인하세요.</td></tr>';
+      } else {
+        setMsg(reservationsMsg, "로드 실패", false);
+      }
     }
   }
 

@@ -4,17 +4,17 @@ import java.time.Clock;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
-import org.springframework.dao.OptimisticLockingFailureException;
 import org.springframework.stereotype.Service;
 import roomescape.common.exception.ConflictException;
 import roomescape.common.exception.ForbiddenException;
 import roomescape.common.exception.NotFoundException;
 import roomescape.common.exception.UnprocessableEntityException;
+import roomescape.dao.MemberDao;
 import roomescape.dao.ReservationDao;
 import roomescape.dao.ReservationTimeDao;
 import roomescape.dao.ThemeDao;
 import roomescape.domain.reservation.Reservation;
-import roomescape.domain.reservation.UserName;
+import roomescape.domain.reservation.member.Member;
 import roomescape.domain.reservation.theme.Theme;
 import roomescape.domain.reservation.time.ReservationTime;
 import roomescape.dto.request.ReservationRequest;
@@ -26,17 +26,19 @@ public class ReservationService {
     private final ReservationTimeDao reservationTimeDao;
     private final ThemeDao themeDao;
     private final Clock clock;
+    private final MemberDao memberDao;
 
     public ReservationService(
             ReservationDao reservationDao,
             ReservationTimeDao reservationTimeDao,
             ThemeDao themeDao,
-            Clock clock
-    ) {
+            Clock clock,
+            MemberDao memberDao) {
         this.reservationDao = reservationDao;
         this.reservationTimeDao = reservationTimeDao;
         this.themeDao = themeDao;
         this.clock = clock;
+        this.memberDao = memberDao;
     }
 
     public List<ReservationResponse> findAll() {
@@ -47,15 +49,15 @@ public class ReservationService {
                 .toList();
     }
 
-    public List<ReservationResponse> findAllByUserName(String userName) {
-        List<Reservation> reservations = reservationDao.findAllByUserName(userName);
+    public List<ReservationResponse> findMyReservations(Long memberId) {
+        List<Reservation> reservations = reservationDao.findAllByMemberId(memberId);
 
         return reservations.stream()
                 .map(ReservationResponse::from)
                 .toList();
     }
 
-    public ReservationResponse save(ReservationRequest request) {
+    public ReservationResponse save(Long memberId, ReservationRequest request) {
         Reservation reservation = convertToReservation(null, request);
 
         Reservation saved = reservationDao.save(reservation);
@@ -67,7 +69,9 @@ public class ReservationService {
         Reservation origin = reservationDao.findById(id)
                 .orElseThrow(() -> new NotFoundException("변경하려는 예약이 존재하지 않습니다."));
 
-        if (!request.name().equals(origin.getName().value())) {
+        Member originMember = origin.getMember();
+
+        if (!request.memberId().equals(originMember.getId())) {
             throw new ForbiddenException("다른 사람의 예약은 변경할 수 없습니다.");
         }
 
@@ -89,14 +93,17 @@ public class ReservationService {
         Theme theme = themeDao.findThemeById(request.themeId())
                 .orElseThrow(() -> new NotFoundException("존재하지 않는 테마입니다."));
 
+        Member member = memberDao.findById(request.memberId())
+                .orElseThrow(() -> new NotFoundException("존재하지 않는 사용자입니다."));
+
         validateAvailability(request.date(), time, theme);
 
         return new Reservation(
                 id,
-                UserName.parse(request.name()),
                 request.date(),
                 time,
-                theme
+                theme,
+                member
         );
     }
 
@@ -123,11 +130,11 @@ public class ReservationService {
         reservationDao.delete(id);
     }
 
-    public void delete(Long id, String userName) {
+    public void delete(Long id, Long memberId) {
         Reservation origin = reservationDao.findById(id)
                 .orElseThrow(() -> new NotFoundException("삭제하려는 예약이 존재하지 않습니다."));
 
-        if (!userName.equals(origin.getName().value())) {
+        if (!memberId.equals(origin.getMember().getId())) {
             throw new ForbiddenException("다른 사람의 예약은 삭제할 수 없습니다.");
         }
 

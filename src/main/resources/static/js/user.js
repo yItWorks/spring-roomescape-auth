@@ -37,6 +37,98 @@
     calendarMonth: new Date(),
   };
 
+  // --- 인증 관련 로직 시작 ---
+  const navLogin = document.getElementById("nav-login");
+  const navLogout = document.getElementById("nav-logout");
+  const loginModal = document.getElementById("login-modal");
+  const loginForm = document.getElementById("login-form");
+  const loginCancel = document.getElementById("login-cancel");
+  const loginMsg = document.getElementById("login-msg");
+
+  function updateAuthUI() {
+    const hasToken = !!localStorage.getItem("token");
+    if (navLogin) navLogin.classList.toggle("is-hidden", hasToken);
+    if (navLogout) navLogout.classList.toggle("is-hidden", !hasToken);
+  }
+
+  if (navLogin) {
+    navLogin.addEventListener("click", (e) => {
+      e.preventDefault();
+      loginModal.classList.remove("is-hidden");
+    });
+  }
+
+  if (loginCancel) {
+    loginCancel.addEventListener("click", () => {
+      loginModal.classList.add("is-hidden");
+      loginMsg.textContent = "";
+    });
+  }
+
+  if (navLogout) {
+    navLogout.addEventListener("click", async (e) => {
+      e.preventDefault();
+      try {
+        await fetch("/logout", { method: "POST" });
+      } catch (err) {} // 서버 로그아웃 실패해도 클라이언트는 비움
+      localStorage.removeItem("token");
+      updateAuthUI();
+      alert("로그아웃 되었습니다.");
+      location.reload();
+    });
+  }
+
+  if (loginForm) {
+    loginForm.addEventListener("submit", async (e) => {
+      e.preventDefault();
+      loginMsg.textContent = "";
+      loginMsg.classList.remove("message--err");
+      const id = document.getElementById("login-id").value;
+      const pw = document.getElementById("login-pw").value;
+
+      try {
+        const res = await fetch("/login", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ loginId: id, password: pw }),
+        });
+        if (!res.ok) {
+          const errText = await res.text();
+          throw new Error(errText || "로그인 실패");
+        }
+        const data = await res.json();
+        // LoginResponse의 필드명에 맞게 저장
+        localStorage.setItem("token", data.accessToken || data.token);
+        loginModal.classList.add("is-hidden");
+        updateAuthUI();
+      } catch (err) {
+        loginMsg.textContent = "로그인 정보가 올바르지 않습니다.";
+        loginMsg.classList.add("message--err");
+      }
+    });
+  }
+
+  updateAuthUI();
+  // --- 인증 관련 로직 끝 ---
+
+  async function fetchJson(url, options = {}) {
+    const headers = options.headers || {};
+    const token = localStorage.getItem("token");
+    if (token) {
+      headers["Authorization"] = `Bearer ${token}`;
+    }
+
+    const res = await fetch(url, { ...options, headers });
+    if (!res.ok) {
+      const t = await res.text();
+      // Spring Security/Interceptor 특성상 401 에러를 던질 때
+      if (res.status === 401) throw new Error("UNAUTHORIZED");
+      throw new Error(t || res.statusText);
+    }
+    if (res.status === 204) return null;
+    return res.json();
+  }
+
   function formatYmd(d) {
     const y = d.getFullYear();
     const m = String(d.getMonth() + 1).padStart(2, "0");
@@ -59,17 +151,6 @@
     return url;
   }
 
-  async function fetchJson(url, options) {
-    const res = await fetch(url, options);
-    if (!res.ok) {
-      const t = await res.text();
-      throw new Error(t || res.statusText);
-    }
-    if (res.status === 204) return null;
-    return res.json();
-  }
-
-  // 인기 테마 조회 (서버 데이터만 사용)[cite: 13]
   async function loadPopular() {
     try {
       const themes = await fetchJson(`/themes/popular?limit=${POPULAR_LIMIT}`);
@@ -98,7 +179,6 @@
     }
   }
 
-  // 예약용 테마 목록 (서버 데이터만 사용)[cite: 13]
   async function loadThemesForBooking() {
     themeGrid.innerHTML = '<p class="panel-hint">테마 목록을 불러오는 중…</p>';
     try {
@@ -137,7 +217,6 @@
     }
   }
 
-  // ... 나머지 예약 관련 함수 (collectAvailableDates, renderCalendar 등 기존 유지)[cite: 13]
   async function collectAvailableDates(themeId) {
     const start = new Date();
     start.setHours(0, 0, 0, 0);
@@ -313,6 +392,12 @@
     ev.preventDefault();
     reserveMessage.textContent = "";
     reserveMessage.className = "message";
+
+    if (!localStorage.getItem("token")) {
+      loginModal.classList.remove("is-hidden");
+      return;
+    }
+
     if (!state.selectedTheme || !state.selectedDate) return;
     const timeId = Number(timeSelect.value, 10);
     const name = nameInput.value.trim();
@@ -335,8 +420,14 @@
       renderCalendar();
       setStep(2);
     } catch (e) {
-      reserveMessage.textContent =
-          "예약에 실패했습니다. 이미 예약된 시간이거나 입력값을 확인해 주세요.";
+      if (e.message === "UNAUTHORIZED") {
+        reserveMessage.textContent = "로그인 세션이 만료되었습니다. 다시 로그인해주세요.";
+        localStorage.removeItem("token");
+        updateAuthUI();
+        loginModal.classList.remove("is-hidden");
+      } else {
+        reserveMessage.textContent = "예약에 실패했습니다. 이미 예약된 시간이거나 입력값을 확인해 주세요.";
+      }
       reserveMessage.classList.add("message--err");
     }
   });

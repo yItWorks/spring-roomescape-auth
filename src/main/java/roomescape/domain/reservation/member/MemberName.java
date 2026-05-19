@@ -1,11 +1,11 @@
-package roomescape.domain.reservation;
+package roomescape.domain.reservation.member;
 
-public record UserName(
+public record MemberName(
         String value
 ) {
     public static final int NAME_MAX_LENGTH = 10;
 
-    public UserName {
+    public MemberName {
         if (value.isBlank()) {
             throw new IllegalArgumentException("예약자 이름은 비어 있을 수 없습니다.");
         }
@@ -15,7 +15,7 @@ public record UserName(
         }
     }
 
-    public static UserName parse(String value) {
-        return new UserName(value);
+    public static MemberName parse(String value) {
+        return new MemberName(value);
     }
 }

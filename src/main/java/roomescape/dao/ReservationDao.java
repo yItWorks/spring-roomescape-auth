@@ -29,11 +29,13 @@ public class ReservationDao {
     public List<Reservation> findAll() {
         return jdbcTemplate.query(
                 """
-                            SELECT r.id,r.name,r.date,rt.id AS time_id, rt.start_at,
-                            t.id AS theme_id, t.name AS theme_name, t.description, t.url
+                            SELECT r.id, r.date, rt.id AS time_id, rt.start_at,
+                                t.id AS theme_id, t.name AS theme_name, t.description, t.url,
+                                m.id AS member_id, m.login_id, m.password, m.name AS member_name
                             FROM reservation r
                             INNER JOIN reservation_time rt ON r.time_id = rt.id
-                            INNER JOIN theme t ON r.theme_id = t.id;
+                            INNER JOIN theme t ON r.theme_id = t.id
+                            INNER JOIN member m ON m.id = r.member_id;
                         """,
                 RESERVATION_ROW_MAPPER
         );
@@ -41,17 +43,37 @@ public class ReservationDao {
 
     public List<Reservation> findAllByUserName(String userName) {
         String sql = """
-                SELECT r.id, r.name,r.date,rt.id AS time_id, rt.start_at,
-                    t.id AS theme_id, t.name AS theme_name, t.description, t.url
+                SELECT r.id, r.date,rt.id AS time_id, rt.start_at,
+                    t.id AS theme_id, t.name AS theme_name, t.description, t.url,
+                    m.id AS member_id, m.login_id, m.password, m.name AS member_name
                 FROM reservation r
                 INNER JOIN reservation_time rt ON r.time_id = rt.id
                 INNER JOIN theme t ON r.theme_id = t.id
-                WHERE r.name = ?;
+                INNER JOIN member m ON m.id = r.member_id
+                WHERE m.name = ?;
                 """;
         return jdbcTemplate.query(
                 sql,
                 RESERVATION_ROW_MAPPER,
                 userName
+        );
+    }
+
+    public List<Reservation> findAllByMemberId(Long memberId) {
+        String sql = """
+                SELECT r.id, r.date,rt.id AS time_id, rt.start_at,
+                    t.id AS theme_id, t.name AS theme_name, t.description, t.url,
+                    m.id AS member_id, m.login_id, m.password, m.name AS member_name
+                FROM reservation r
+                INNER JOIN reservation_time rt ON r.time_id = rt.id
+                INNER JOIN theme t ON r.theme_id = t.id
+                INNER JOIN member m ON m.id = r.member_id
+                WHERE r.member_id = ?;
+                """;
+        return jdbcTemplate.query(
+                sql,
+                RESERVATION_ROW_MAPPER,
+                memberId
         );
     }
 
@@ -75,33 +97,34 @@ public class ReservationDao {
 
     public Reservation save(Reservation reservation) {
         Map<String, Object> params = new HashMap<>();
-        params.put("name", reservation.getName().value());
         params.put("date", reservation.getDate());
         params.put("time_id", reservation.getTime().getId());
         params.put("theme_id", reservation.getTheme().getId());
+        params.put("member_id", reservation.getMember().getId());
 
         Long id = jdbcInsert.executeAndReturnKey(params).longValue();
         return new Reservation(
                 id,
-                reservation.getName(),
                 reservation.getDate(),
                 reservation.getTime(),
-                reservation.getTheme());
+                reservation.getTheme(),
+                reservation.getMember()
+        );
     }
 
     public boolean update(Reservation reservation) {
         String sql = """
                 UPDATE reservation
-                SET name = ?, date = ?, time_id = ?, theme_id = ?
+                SET date = ?, time_id = ?, theme_id = ?, member_id = ?
                 WHERE id = ?;
                 """;
 
         int affectedRows = jdbcTemplate.update(
                 sql,
-                reservation.getName().value(),
                 reservation.getDate(),
                 reservation.getTime().getId(),
                 reservation.getTheme().getId(),
+                reservation.getMember().getId(),
                 reservation.getId()
         );
 
@@ -149,11 +172,13 @@ public class ReservationDao {
 
     public Optional<Reservation> findById(Long id) {
         String sql = """
-                SELECT r.id, r.name,r.date,rt.id AS time_id, rt.start_at,
-                    t.id AS theme_id, t.name AS theme_name, t.description, t.url
+                SELECT r.id, r.date,rt.id AS time_id, rt.start_at,
+                    t.id AS theme_id, t.name AS theme_name, t.description, t.url,
+                    m.id AS member_id, m.login_id, m.password, m.name AS member_name
                 FROM reservation r
                 INNER JOIN reservation_time rt ON r.time_id = rt.id
                 INNER JOIN theme t ON r.theme_id = t.id
+                INNER JOIN member m ON m.id = r.member_id
                 WHERE r.id = ?
                 """;
 

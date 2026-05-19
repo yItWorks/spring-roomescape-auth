@@ -1,8 +1,9 @@
 package roomescape.dao.rowMapper;
 
 import org.springframework.jdbc.core.RowMapper;
-import roomescape.domain.reservation.UserName;
+import roomescape.domain.reservation.member.MemberName;
 import roomescape.domain.reservation.Reservation;
+import roomescape.domain.reservation.member.Member;
 import roomescape.domain.reservation.theme.Description;
 import roomescape.domain.reservation.theme.ThemeName;
 import roomescape.domain.reservation.theme.ThumbnailUrl;
@@ -22,12 +23,18 @@ public final class ReservationMapper {
                 Description.parse(rs.getString("description")),
                 ThumbnailUrl.parse(rs.getString("url"))
         );
+        Member member = new Member(
+                rs.getLong("member_id"),
+                rs.getString("login_id"),
+                rs.getString("password"),
+                MemberName.parse(rs.getString("member_name"))
+        );
         return new Reservation(
                 rs.getLong("id"),
-                UserName.parse(rs.getString("name")),
                 rs.getDate("date").toLocalDate(),
                 time,
-                theme
+                theme,
+                member
         );
     };
 

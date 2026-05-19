@@ -10,7 +10,11 @@
 <header class="admin-header">
     <div class="admin-header__inner">
         <h1 class="admin-title">관리자</h1>
-        <a href="/index.html" class="link-home">사용자 예약 페이지</a>
+        <div style="display: flex; gap: 1rem; align-items: center;">
+            <a href="#" id="nav-login" class="link-home">관리자 로그인</a>
+            <a href="#" id="nav-logout" class="link-home is-hidden">로그아웃</a>
+            <a href="/index.html" class="link-home">사용자 예약 페이지</a>
+        </div>
     </div>
 </header>
 
@@ -79,7 +83,7 @@
 
     <section class="card">
         <h2>전체 예약 목록</h2>
-        <p class="help">관리자 페이지에서만 확인할 수 있습니다.</p>
+        <p class="help">관리자 페이지에서만 확인할 수 있습니다. (토큰 인증 필요)</p>
         <div class="table-wrap">
             <table class="data-table">
                 <thead>
@@ -98,6 +102,27 @@
         <p id="reservations-msg" class="message" role="status"></p>
     </section>
 </main>
+
+<div id="login-modal" class="modal-overlay is-hidden">
+    <div class="modal card">
+        <h2>관리자 로그인</h2>
+        <form id="login-form" class="form-grid" style="margin-top: 1rem;">
+            <label class="field field--full">
+                <span class="field__label">아이디</span>
+                <input type="text" id="login-id" required />
+            </label>
+            <label class="field field--full">
+                <span class="field__label">비밀번호</span>
+                <input type="password" id="login-pw" required />
+            </label>
+            <div class="actions">
+                <button type="submit" class="btn btn--primary">로그인</button>
+                <button type="button" id="login-cancel" class="btn btn--ghost">취소</button>
+            </div>
+        </form>
+        <p id="login-msg" class="message"></p>
+    </div>
+</div>
 
 <script src="/js/admin.js" defer></script>
 </body>
