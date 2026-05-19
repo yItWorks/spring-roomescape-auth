@@ -23,7 +23,7 @@ public class MemberDao {
     public Optional<Member> findByLoginId(String loginId) {
         String sql = """
                 SELECT id, login_id, password, name
-                FROM users
+                FROM member
                 WHERE login_id = ?;
                 """;
 
@@ -38,8 +38,8 @@ public class MemberDao {
     public Optional<Member> findById(Long id) {
         String sql = """
                 SELECT id, login_id, password, name
-                FROM users
-                WHERE login_id = ?;
+                FROM member
+                WHERE id = ?;
                 """;
 
         return jdbcTemplate.query(
