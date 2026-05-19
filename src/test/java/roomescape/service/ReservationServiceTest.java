@@ -20,10 +20,10 @@ import roomescape.dto.request.ReservationRequest;
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.DEFINED_PORT)
 @DirtiesContext(classMode = DirtiesContext.ClassMode.BEFORE_EACH_TEST_METHOD)
 public class ReservationServiceTest {
-    private final String name = "브라운";
     private final LocalDate futureDate = LocalDate.parse(FUTURE_DATE);
     private final Long timeId = 1L;
     private final Long themeId = 1L;
+    private final Long memberId = 1L;
 
     @Autowired
     private ReservationService reservationService;
@@ -32,13 +32,13 @@ public class ReservationServiceTest {
     @DisplayName("정상 예약을 생성하면 통과한다.")
     void 정상_예약_생성_테스트() {
         ReservationRequest request = new ReservationRequest(
-                name,
                 futureDate,
                 timeId,
-                themeId
+                themeId,
+                memberId
         );
 
-        assertDoesNotThrow(() -> reservationService.save(request));
+        assertDoesNotThrow(() -> reservationService.save(memberId, request));
     }
 
     @Test
@@ -46,13 +46,13 @@ public class ReservationServiceTest {
     void 없는_시간_식별자_예외_테스트() {
         Long invalidTimeId = 999L;
         ReservationRequest request = new ReservationRequest(
-                name,
                 futureDate,
                 invalidTimeId,
-                themeId
+                themeId,
+                memberId
         );
 
-        assertThatThrownBy(() -> reservationService.save(request))
+        assertThatThrownBy(() -> reservationService.save(memberId, request))
                 .isInstanceOf(NotFoundException.class)
                 .hasMessageContaining("존재하지 않는 시간입니다.");
     }
@@ -62,13 +62,13 @@ public class ReservationServiceTest {
     void 없는_테마_식별자_예외_테스트() {
         Long invalidThemeId = 999L;
         ReservationRequest request = new ReservationRequest(
-                name,
                 futureDate,
                 timeId,
-                invalidThemeId
+                invalidThemeId,
+                memberId
         );
 
-        assertThatThrownBy(() -> reservationService.save(request))
+        assertThatThrownBy(() -> reservationService.save(memberId, request))
                 .isInstanceOf(NotFoundException.class)
                 .hasMessageContaining("존재하지 않는 테마입니다.");
     }
@@ -79,13 +79,13 @@ public class ReservationServiceTest {
         LocalDate date = LocalDate.parse(TODAY);
         Long timeId = 1L;
         ReservationRequest request = new ReservationRequest(
-                name,
                 date,
                 timeId,
-                themeId
+                themeId,
+                memberId
         );
 
-        assertThatThrownBy(() -> reservationService.save(request))
+        assertThatThrownBy(() -> reservationService.save(memberId, request))
                 .isInstanceOf(UnprocessableEntityException.class)
                 .hasMessageContaining("이미 지난 시간입니다.");
     }
@@ -95,13 +95,13 @@ public class ReservationServiceTest {
     void 중복_예약_예외_테스트() {
         Long timeId = 5L;
         ReservationRequest request = new ReservationRequest(
-                name,
                 futureDate,
                 timeId,
-                themeId
+                themeId,
+                memberId
         );
 
-        assertThatThrownBy(() -> reservationService.save(request))
+        assertThatThrownBy(() -> reservationService.save(memberId, request))
                 .isInstanceOf(ConflictException.class)
                 .hasMessageContaining("이미 존재하는 예약 건입니다.");
     }
@@ -110,12 +110,12 @@ public class ReservationServiceTest {
     @DisplayName("다른 사람의 예약을 변경하려하면 예외가 발생한다.")
     void 타인_예약_변경_예외_테스트() {
         Long id = 24L;
-        String otherName = "브리";
+        Long otherMemberId = 2L;
         ReservationRequest request = new ReservationRequest(
-                otherName,
                 futureDate,
                 timeId,
-                themeId
+                themeId,
+                otherMemberId
         );
 
         assertThatThrownBy(() -> reservationService.updateDateTime(id, request))
