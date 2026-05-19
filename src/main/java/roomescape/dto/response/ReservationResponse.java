@@ -6,9 +6,9 @@ import roomescape.domain.reservation.Reservation;
 public record ReservationResponse(
         Long id,
         LocalDate date,
-        ReservationTimeResponse timeResponse,
-        ThemeResponse themeResponse,
-        MemberResponse memberResponse
+        ReservationTimeResponse time,
+        ThemeResponse theme,
+        MemberResponse member
 ) {
 
     public static ReservationResponse from(Reservation reservation) {
