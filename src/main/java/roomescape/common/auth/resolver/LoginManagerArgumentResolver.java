@@ -8,24 +8,25 @@ import org.springframework.web.bind.support.WebDataBinderFactory;
 import org.springframework.web.context.request.NativeWebRequest;
 import org.springframework.web.method.support.HandlerMethodArgumentResolver;
 import org.springframework.web.method.support.ModelAndViewContainer;
+import roomescape.common.exception.ForbiddenException;
 import roomescape.common.exception.UnauthorizedException;
-import roomescape.dao.MemberDao;
-import roomescape.domain.member.Member;
+import roomescape.dao.ManagerDao;
+import roomescape.domain.member.manager.Manager;
 
 @Component
-public class LoginMemberArgumentResolver implements HandlerMethodArgumentResolver {
+public class LoginManagerArgumentResolver implements HandlerMethodArgumentResolver {
     private static final String LOGIN_MEMBER_ID = "loginMemberId";
 
-    private final MemberDao memberDao;
+    private final ManagerDao managerDao;
 
-    public LoginMemberArgumentResolver(MemberDao memberDao) {
-        this.memberDao = memberDao;
+    public LoginManagerArgumentResolver(ManagerDao managerDao) {
+        this.managerDao = managerDao;
     }
 
     @Override
     public boolean supportsParameter(MethodParameter parameter) {
-        boolean hasAnnotation = parameter.hasParameterAnnotation(LoginMember.class);
-        boolean isMemberType = Member.class.isAssignableFrom(parameter.getParameterType());
+        boolean hasAnnotation = parameter.hasParameterAnnotation(LoginManager.class);
+        boolean isMemberType = Manager.class.isAssignableFrom(parameter.getParameterType());
 
         return hasAnnotation && isMemberType;
     }
@@ -45,7 +46,7 @@ public class LoginMemberArgumentResolver implements HandlerMethodArgumentResolve
             throw new UnauthorizedException("로그인이 필요합니다.");
         }
 
-        return memberDao.findById(memberId)
-                .orElseThrow(() -> new UnauthorizedException("ID가 틀렸습니다."));
+        return managerDao.findByMemberId(memberId)
+                .orElseThrow(() -> new ForbiddenException("권한이 없습니다."));
     }
 }
