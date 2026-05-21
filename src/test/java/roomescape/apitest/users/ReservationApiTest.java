@@ -73,7 +73,6 @@ class ReservationApiTest {
                 .statusCode(200)
                 .extract().jsonPath();
 
-        System.out.println(jsonPath+ "\n\n\n\n");
         List<Long> idsByMemberId = jsonPath.getList("id", Long.class);
         List<Long> memberIds = jsonPath.getList("member.id", Long.class);
 
