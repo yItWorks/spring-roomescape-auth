@@ -73,8 +73,8 @@ public class ReservationService {
     public ReservationResponse save(Long memberId, ReservationRequest request) {
         Reservation reservation = convertToReservation(null, request);
 
-        if (memberId.equals(reservation.getMember().getId())) {
-
+        if (!memberId.equals(reservation.getMember().getId())) {
+            throw new ForbiddenException("다른 사람의 예약은 등록할 수 없습니다.");
         }
 
         Reservation saved = reservationDao.save(reservation);
