@@ -26,6 +26,7 @@ class ReservationApiTest {
     private final Long timeId = 1L;
     private final Long themeId = 1L;
     private final Long memberId = 1L;
+    private final Long storeId = 1L;
     private int initialReservationSize;
 
     @Autowired
@@ -56,6 +57,7 @@ class ReservationApiTest {
         reservation.put("timeId", timeId);
         reservation.put("themeId", themeId);
         reservation.put("memberId", memberId);
+        reservation.put("storeId", storeId);
 
         Long generatedId = RestAssured.given().log().all()
                 .contentType(ContentType.JSON)
@@ -65,22 +67,13 @@ class ReservationApiTest {
                 .statusCode(201)
                 .extract().jsonPath().getLong("id");
 
-        List<Long> allIds = RestAssured.given().log().all()
-                .when().get("/reservations")
-                .then().log().all()
-                .statusCode(200)
-                .extract().jsonPath().getList("id", Long.class);
-
-        assertThat(allIds)
-                .hasSize(initialReservationSize + 1)
-                .contains(generatedId);
-
         JsonPath jsonPath = RestAssured.given().log().all()
                 .when().get("/reservations/mine")
                 .then().log().all()
                 .statusCode(200)
                 .extract().jsonPath();
 
+        System.out.println(jsonPath+ "\n\n\n\n");
         List<Long> idsByMemberId = jsonPath.getList("id", Long.class);
         List<Long> memberIds = jsonPath.getList("member.id", Long.class);
 
@@ -96,7 +89,7 @@ class ReservationApiTest {
                 .statusCode(204);
 
         List<Long> remainIds = RestAssured.given().log().all()
-                .when().get("/reservations")
+                .when().get("/reservations/mine")
                 .then().log().all()
                 .statusCode(200)
                 .extract().jsonPath().getList("id", Long.class);
@@ -114,6 +107,7 @@ class ReservationApiTest {
         reservation.put("timeId", timeId);
         reservation.put("themeId", themeId);
         reservation.put("memberId", memberId);
+        reservation.put("storeId", storeId);
 
         Long updatedTimeId = RestAssured.given().log().all()
                 .contentType(ContentType.JSON)
@@ -135,6 +129,7 @@ class ReservationApiTest {
         reservation.put("timeId", timeId);
         reservation.put("themeId", themeId);
         reservation.put("memberId", memberId);
+        reservation.put("storeId", storeId);
 
         String updatedDate = RestAssured.given().log().all()
                 .contentType(ContentType.JSON)
@@ -154,6 +149,7 @@ class ReservationApiTest {
         params.put("date", FUTURE_DATE);
         params.put("timeId", timeId);
         params.put("themeId", themeId);
+        params.put("storeId", storeId);
 
         RestAssured.given().log().all()
                 .contentType(ContentType.JSON)
@@ -170,6 +166,7 @@ class ReservationApiTest {
         params.put("timeId", timeId);
         params.put("themeId", themeId);
         params.put("memberId", memberId);
+        params.put("storeId", storeId);
 
         RestAssured.given().log().all()
                 .contentType(ContentType.JSON)
@@ -187,6 +184,7 @@ class ReservationApiTest {
         params.put("timeId", timeId);
         params.put("themeId", themeId);
         params.put("memberId", memberId);
+        params.put("storeId", storeId);
 
         RestAssured.given().log().all()
                 .contentType(ContentType.JSON)
@@ -203,6 +201,7 @@ class ReservationApiTest {
         params.put("date", FUTURE_DATE);
         params.put("themeId", themeId);
         params.put("memberId", memberId);
+        params.put("storeId", storeId);
 
         RestAssured.given().log().all()
                 .contentType(ContentType.JSON)
@@ -218,6 +217,24 @@ class ReservationApiTest {
         Map<String, Object> params = new HashMap<>();
         params.put("date", FUTURE_DATE);
         params.put("timeId", timeId);
+        params.put("memberId", memberId);
+        params.put("storeId", storeId);
+
+        RestAssured.given().log().all()
+                .contentType(ContentType.JSON)
+                .body(params)
+                .when().post("/reservations")
+                .then().log().all()
+                .statusCode(400);
+    }
+
+    @Test
+    @DisplayName("매장 식별자가 null이면 상태코드 400을 반환한다.")
+    void 요청_매장_식별자_null_테스트() {
+        Map<String, Object> params = new HashMap<>();
+        params.put("date", FUTURE_DATE);
+        params.put("timeId", timeId);
+        params.put("themeId", themeId);
         params.put("memberId", memberId);
 
         RestAssured.given().log().all()

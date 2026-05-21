@@ -10,14 +10,17 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import roomescape.domain.member.Member;
 import roomescape.domain.member.MemberName;
+import roomescape.domain.member.Role;
+import roomescape.domain.reservation.store.Store;
+import roomescape.domain.reservation.store.StoreName;
 import roomescape.domain.reservation.theme.Description;
+import roomescape.domain.reservation.theme.Theme;
 import roomescape.domain.reservation.theme.ThemeName;
 import roomescape.domain.reservation.theme.ThumbnailUrl;
 import roomescape.domain.reservation.time.ReservationTime;
-import roomescape.domain.reservation.theme.Theme;
 
 class ReservationTest {
-    private final Member member = new Member(1L, "brown", "brown", MemberName.parse("브라운"));
+    private final Member member = new Member(1L, "brown", "brown", MemberName.parse("브라운"), Role.GENERAL);
     private final LocalDate date = LocalDate.parse(TODAY);
 
     private final ReservationTime time = new ReservationTime(1L, LocalTime.of(10, 0));
@@ -26,11 +29,12 @@ class ReservationTest {
     private final Description description = Description.parse("너무무서워");
     private final ThumbnailUrl url = ThumbnailUrl.parse("/images/horror");
     private final Theme theme = new Theme(1L, themeName, description, url);
+    private final Store store = new Store(1L, StoreName.parse("잠실점"));
 
     @Test
     @DisplayName("올바른 정보로 예약을 생성하면 성공한다.")
     void 정상_예약_테스트() {
-        assertDoesNotThrow(() -> new Reservation(date, time, theme, member));
+        assertDoesNotThrow(() -> new Reservation(date, time, theme, member, store));
     }
 
     @Test
@@ -38,7 +42,7 @@ class ReservationTest {
     void 이름이_null_예외_테스트() {
         Member member = null;
 
-        assertThatThrownBy(() -> new Reservation(date, time, theme, member))
+        assertThatThrownBy(() -> new Reservation(date, time, theme, member, store))
                 .isInstanceOf(NullPointerException.class)
                 .hasMessage("예약자가 비어 있습니다.");
     }
@@ -48,7 +52,7 @@ class ReservationTest {
     void 날짜가_null_예외_테스트() {
         LocalDate date = null;
 
-        assertThatThrownBy(() -> new Reservation(date, time, theme, member))
+        assertThatThrownBy(() -> new Reservation(date, time, theme, member, store))
                 .isInstanceOf(NullPointerException.class)
                 .hasMessage("예약 날짜가 비어 있습니다.");
     }
@@ -58,7 +62,7 @@ class ReservationTest {
     void 시간이_null_예외_테스트() {
         ReservationTime time = null;
 
-        assertThatThrownBy(() -> new Reservation(date, time, theme, member))
+        assertThatThrownBy(() -> new Reservation(date, time, theme, member, store))
                 .isInstanceOf(NullPointerException.class)
                 .hasMessage("시간이 비어 있습니다.");
     }
@@ -68,8 +72,18 @@ class ReservationTest {
     void 테마가_null_예외_테스트() {
         Theme theme = null;
 
-        assertThatThrownBy(() -> new Reservation(date, time, theme, member))
+        assertThatThrownBy(() -> new Reservation(date, time, theme, member, store))
                 .isInstanceOf(NullPointerException.class)
                 .hasMessage("테마가 비어 있습니다.");
+    }
+
+    @Test
+    @DisplayName("매장이 null 이면 예외가 발생한다.")
+    void 매장이_null_예외_테스트() {
+        Store store = null;
+
+        assertThatThrownBy(() -> new Reservation(date, time, theme, member, store))
+                .isInstanceOf(NullPointerException.class)
+                .hasMessage("예약 매장이 비어 있습니다.");
     }
 }

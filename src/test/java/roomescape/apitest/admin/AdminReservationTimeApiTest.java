@@ -1,17 +1,36 @@
 package roomescape.apitest.admin;
 
 import io.restassured.RestAssured;
+import io.restassured.builder.RequestSpecBuilder;
 import io.restassured.http.ContentType;
 import java.util.HashMap;
 import java.util.Map;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.annotation.DirtiesContext;
+import roomescape.common.auth.jwt.TokenProvider;
 
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.DEFINED_PORT)
 @DirtiesContext(classMode = DirtiesContext.ClassMode.BEFORE_EACH_TEST_METHOD)
 class AdminReservationTimeApiTest {
+    private final Long memberId = 3L;
+
+    @Autowired
+    TokenProvider tokenProvider;
+
+    private String token;
+
+    @BeforeEach
+    void setUp() {
+        token = tokenProvider.createToken(memberId);
+
+        RestAssured.requestSpecification = new RequestSpecBuilder()
+                .addHeader("Authorization", "Bearer " + token)
+                .build();
+    }
 
     @Test
     void 시간_관리자_API() {

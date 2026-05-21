@@ -24,6 +24,7 @@ public class ReservationServiceTest {
     private final Long timeId = 1L;
     private final Long themeId = 1L;
     private final Long memberId = 1L;
+    private final Long storeId = 1L;
 
     @Autowired
     private ReservationService reservationService;
@@ -35,7 +36,8 @@ public class ReservationServiceTest {
                 futureDate,
                 timeId,
                 themeId,
-                memberId
+                memberId,
+                storeId
         );
 
         assertDoesNotThrow(() -> reservationService.save(memberId, request));
@@ -49,7 +51,8 @@ public class ReservationServiceTest {
                 futureDate,
                 invalidTimeId,
                 themeId,
-                memberId
+                memberId,
+                storeId
         );
 
         assertThatThrownBy(() -> reservationService.save(memberId, request))
@@ -65,7 +68,8 @@ public class ReservationServiceTest {
                 futureDate,
                 timeId,
                 invalidThemeId,
-                memberId
+                memberId,
+                storeId
         );
 
         assertThatThrownBy(() -> reservationService.save(memberId, request))
@@ -82,7 +86,8 @@ public class ReservationServiceTest {
                 date,
                 timeId,
                 themeId,
-                memberId
+                memberId,
+                storeId
         );
 
         assertThatThrownBy(() -> reservationService.save(memberId, request))
@@ -98,7 +103,8 @@ public class ReservationServiceTest {
                 futureDate,
                 timeId,
                 themeId,
-                memberId
+                memberId,
+                storeId
         );
 
         assertThatThrownBy(() -> reservationService.save(memberId, request))
@@ -115,7 +121,8 @@ public class ReservationServiceTest {
                 futureDate,
                 timeId,
                 themeId,
-                otherMemberId
+                otherMemberId,
+                storeId
         );
 
         assertThatThrownBy(() -> reservationService.updateDateTime(id, request))
