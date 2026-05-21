@@ -52,10 +52,7 @@ public class ReservationService {
         this.storeDao = storeDao;
     }
 
-    public List<ReservationResponse> findMyStoreReservations(Long memberId) {
-        Manager manager = managerDao.findByMemberId(memberId)
-                .orElseThrow(() -> new ForbiddenException("권한이 없습니다."));
-
+    public List<ReservationResponse> findMyStoreReservations(Manager manager) {
         Long storeId = manager.getStore().getId();
 
         List<Reservation> reservations = reservationDao.findAllByStoreId(storeId);
@@ -75,6 +72,10 @@ public class ReservationService {
 
     public ReservationResponse save(Long memberId, ReservationRequest request) {
         Reservation reservation = convertToReservation(null, request);
+
+        if (memberId.equals(reservation.getMember().getId())) {
+
+        }
 
         Reservation saved = reservationDao.save(reservation);
 
@@ -100,6 +101,29 @@ public class ReservationService {
         }
 
         return ReservationResponse.from(modified);
+    }
+
+    public ReservationResponse updateDateTime(Manager manager, Long id, ReservationRequest request) {
+        Reservation origin = reservationDao.findById(id)
+                .orElseThrow(() -> new NotFoundException("변경하려는 예약이 존재하지 않습니다."));
+
+        validateOwnerStore(manager, origin);
+
+        Reservation modified = convertToReservation(id, request);
+
+        boolean isSuccessful = reservationDao.update(modified);
+
+        if (!isSuccessful) {
+            throw new ConflictException("다른 사용자가 예약했습니다. 다시 시도해주세요.");
+        }
+
+        return ReservationResponse.from(modified);
+    }
+
+    private static void validateOwnerStore(Manager manager, Reservation origin) {
+        if (!origin.getStore().getId().equals(manager.getStore().getId())) {
+            throw new ForbiddenException("다른 매장의 예약에 접근할 수 없습니다.");
+        }
     }
 
     private Reservation convertToReservation(Long id, ReservationRequest request) {
@@ -146,8 +170,13 @@ public class ReservationService {
         }
     }
 
-    public void delete(Long id) {
-        reservationDao.delete(id);
+    public void delete(Manager manager, Long id) {
+        Reservation reservation = reservationDao.findById(id)
+                .orElseThrow(() -> new NotFoundException("삭제하려는 예약이 존재하지 않습니다."));
+
+        validateOwnerStore(manager, reservation);
+
+        reservationDao.deleteById(id);
     }
 
     public void delete(Long id, Long memberId) {
@@ -160,6 +189,6 @@ public class ReservationService {
 
         validatePastTime(origin.getDate(), origin.getTime());
 
-        reservationDao.delete(id);
+        reservationDao.deleteById(id);
     }
 }

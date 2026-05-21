@@ -140,10 +140,6 @@ public class ReservationDao {
         return affectedRows > 0;
     }
 
-    public void delete(Long id) {
-        jdbcTemplate.update("DELETE FROM reservation WHERE id = ?", id);
-    }
-
     public boolean existsById(Long id) {
         String sql = """
                 SELECT EXISTS(
@@ -199,5 +195,17 @@ public class ReservationDao {
                         id
                 ).stream()
                 .findFirst();
+    }
+
+    public void deleteById(Long id) {
+        String sql = """
+                DELETE FROM reservation 
+                WHERE id = ?
+                """;
+
+        jdbcTemplate.update(
+                sql,
+                id
+        );
     }
 }

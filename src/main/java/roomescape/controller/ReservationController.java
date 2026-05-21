@@ -30,9 +30,10 @@ public class ReservationController {
     }
 
     @GetMapping("/mine")
-    public List<ReservationResponse> myReservations(@LoginMember Member member) {
+    public ResponseEntity<List<ReservationResponse>> myReservations(@LoginMember Member member) {
+        List<ReservationResponse> response = reservationService.findMyReservations(member.getId());
 
-        return reservationService.findMyReservations(member.getId());
+        return ResponseEntity.ok().body(response);
     }
 
     @PostMapping
