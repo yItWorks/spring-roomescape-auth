@@ -30,6 +30,12 @@ INSERT INTO store (name) VALUES ('판교점');
 INSERT INTO member (login_id, password, name, role) VALUES ('brown', 'brown', '브라운', 'GENERAL');
 INSERT INTO member (login_id, password, name, role) VALUES ('brie', 'brie', '브리', 'GENERAL');
 
+INSERT INTO member (login_id, password, name, role) VALUES ('neo', 'neo', '네오', 'MANAGER');
+INSERT INTO member (login_id, password, name, role) VALUES ('woniee', 'woniee', '워니', 'MANAGER');
+
+INSERT INTO manager (member_id, store_id) VALUES (3, 1);
+INSERT INTO manager (member_id, store_id) VALUES (4, 2);
+
 INSERT INTO reservation (date, time_id, theme_id, member_id, store_id) VALUES ('2026-05-01', 1, 11, 1, 1);
 INSERT INTO reservation (date, time_id, theme_id, member_id, store_id) VALUES ('2026-05-02', 1, 11, 1, 1);
 
