@@ -26,7 +26,7 @@ public class ThemeDao {
                 .usingGeneratedKeyColumns("id");
     }
 
-    public Optional<Theme> findThemeById(Long id) {
+    public Optional<Theme> findById(Long id) {
         String sql = """
                 SELECT id, name, description, url 
                 FROM theme 
@@ -94,13 +94,13 @@ public class ThemeDao {
     public List<ReservationTime> findAvailableTime(Long id, LocalDate date) {
         return jdbcTemplate.query(
                 """
-                             SELECT t.id AS time_id, t.start_at
-                             FROM reservation_time t
-                             LEFT JOIN reservation r ON t.id = r.time_id
-                                AND r.theme_id = ?
-                                AND r.date = ?
-                             WHERE r.id is NULL
-                        """,
+                     SELECT t.id, t.start_at
+                     FROM reservation_time t
+                     LEFT JOIN reservation r ON t.id = r.time_id
+                        AND r.theme_id = ?
+                        AND r.date = ?
+                     WHERE r.id is NULL
+                """,
                 RESERVATION_TIME_ROW_MAPPER,
                 id,
                 date

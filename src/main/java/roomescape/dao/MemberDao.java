@@ -16,13 +16,13 @@ public class MemberDao {
     public MemberDao(JdbcTemplate jdbcTemplate) {
         this.jdbcTemplate = jdbcTemplate;
         this.jdbcInsert = new SimpleJdbcInsert(jdbcTemplate)
-                .withTableName("users")
+                .withTableName("member")
                 .usingGeneratedKeyColumns("id");
     }
 
     public Optional<Member> findByLoginId(String loginId) {
         String sql = """
-                SELECT id, login_id, password, name
+                SELECT id, login_id, password, name, role
                 FROM member
                 WHERE login_id = ?;
                 """;
@@ -37,7 +37,7 @@ public class MemberDao {
 
     public Optional<Member> findById(Long id) {
         String sql = """
-                SELECT id, login_id, password, name
+                SELECT id, login_id, password, name, role
                 FROM member
                 WHERE id = ?;
                 """;

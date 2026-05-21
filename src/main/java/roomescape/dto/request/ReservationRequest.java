@@ -13,6 +13,8 @@ public record ReservationRequest(
         @NotNull(message = "테마 식별자는 필수 값입니다.")
         Long themeId,
         @NotNull(message = "사용자 식별자는 필수 값입니다.")
-        Long memberId
+        Long memberId,
+        @NotNull(message = "매장 식별자는 필수 값입니다.")
+        Long storeId
 ) {
 }

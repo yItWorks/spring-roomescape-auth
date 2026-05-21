@@ -7,16 +7,18 @@ public class Member {
     private final String loginId;
     private final String password;
     private final MemberName name;
+    private final Role role;
 
-    public Member(Long id, String loginId, String password, MemberName name) {
+    public Member(Long id, String loginId, String password, MemberName name, Role role) {
         this.id = id;
-        validate(loginId, password, name);
+        validate(loginId, password, name, role);
         this.loginId = loginId;
         this.password = password;
         this.name = name;
+        this.role = role;
     }
 
-    private void validate(String loginId, String password, MemberName name) {
+    private void validate(String loginId, String password, MemberName name, Role role) {
         Objects.requireNonNull(loginId, "ID가 비어 있습니다.");
         Objects.requireNonNull(password, "비밀번호가 비어 있습니다.");
         Objects.requireNonNull(name, "예약자 이름이 비어 있습니다.");
@@ -36,5 +38,9 @@ public class Member {
 
     public MemberName getName() {
         return name;
+    }
+
+    public Role getRole() {
+        return role;
     }
 }

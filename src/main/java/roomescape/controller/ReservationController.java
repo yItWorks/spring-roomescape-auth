@@ -29,13 +29,6 @@ public class ReservationController {
         this.reservationService = reservationService;
     }
 
-    @GetMapping
-    public ResponseEntity<List<ReservationResponse>> read() {
-        List<ReservationResponse> response = reservationService.findAll();
-
-        return ResponseEntity.ok().body(response);
-    }
-
     @GetMapping("/mine")
     public List<ReservationResponse> myReservations(@LoginMember Member member) {
 

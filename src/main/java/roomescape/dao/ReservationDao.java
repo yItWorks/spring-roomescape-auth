@@ -29,33 +29,17 @@ public class ReservationDao {
     public List<Reservation> findAll() {
         return jdbcTemplate.query(
                 """
-                            SELECT r.id, r.date, rt.id AS time_id, rt.start_at,
-                                t.id AS theme_id, t.name AS theme_name, t.description, t.url,
-                                m.id AS member_id, m.login_id, m.password, m.name AS member_name
-                            FROM reservation r
-                            INNER JOIN reservation_time rt ON r.time_id = rt.id
-                            INNER JOIN theme t ON r.theme_id = t.id
-                            INNER JOIN member m ON m.id = r.member_id;
-                        """,
-                RESERVATION_ROW_MAPPER
-        );
-    }
-
-    public List<Reservation> findAllByUserName(String userName) {
-        String sql = """
-                SELECT r.id, r.date,rt.id AS time_id, rt.start_at,
+                SELECT r.id, r.date, rt.id AS time_id, rt.start_at,
                     t.id AS theme_id, t.name AS theme_name, t.description, t.url,
-                    m.id AS member_id, m.login_id, m.password, m.name AS member_name
+                    m.id AS member_id, m.login_id, m.password, m.name AS member_name, m.role,
+                    s.id AS store_id, s.name AS store_name
                 FROM reservation r
                 INNER JOIN reservation_time rt ON r.time_id = rt.id
                 INNER JOIN theme t ON r.theme_id = t.id
                 INNER JOIN member m ON m.id = r.member_id
-                WHERE m.name = ?;
-                """;
-        return jdbcTemplate.query(
-                sql,
-                RESERVATION_ROW_MAPPER,
-                userName
+                INNER JOIN store s ON s.id = r.store_id;
+            """,
+                RESERVATION_ROW_MAPPER
         );
     }
 
@@ -63,11 +47,13 @@ public class ReservationDao {
         String sql = """
                 SELECT r.id, r.date,rt.id AS time_id, rt.start_at,
                     t.id AS theme_id, t.name AS theme_name, t.description, t.url,
-                    m.id AS member_id, m.login_id, m.password, m.name AS member_name
+                    m.id AS member_id, m.login_id, m.password, m.name AS member_name, m.role,
+                    s.id AS store_id, s.name AS store_name
                 FROM reservation r
                 INNER JOIN reservation_time rt ON r.time_id = rt.id
                 INNER JOIN theme t ON r.theme_id = t.id
                 INNER JOIN member m ON m.id = r.member_id
+                INNER JOIN store s ON s.id = r.store_id
                 WHERE r.member_id = ?;
                 """;
         return jdbcTemplate.query(
@@ -77,10 +63,30 @@ public class ReservationDao {
         );
     }
 
+    public List<Reservation> findAllByStoreId(Long storeId) {
+        String sql = """
+                SELECT r.id, r.date,rt.id AS time_id, rt.start_at,
+                    t.id AS theme_id, t.name AS theme_name, t.description, t.url,
+                    m.id AS member_id, m.login_id, m.password, m.name AS member_name, m.role,
+                    s.id AS store_id, s.name AS store_name
+                FROM reservation r
+                INNER JOIN reservation_time rt ON r.time_id = rt.id
+                INNER JOIN theme t ON r.theme_id = t.id
+                INNER JOIN member m ON m.id = r.member_id
+                INNER JOIN store s ON s.id = r.store_id
+                WHERE r.store_id = ?;
+                """;
+        return jdbcTemplate.query(
+                sql,
+                RESERVATION_ROW_MAPPER,
+                storeId
+        );
+    }
+
     public boolean existsBy(LocalDate date, Theme theme, ReservationTime time) {
         Boolean result = jdbcTemplate.queryForObject("""
                         SELECT EXISTS(
-                            SELECT *
+                            SELECT 1
                             FROM reservation
                             WHERE date = ?
                                 AND time_id = ?
@@ -101,6 +107,7 @@ public class ReservationDao {
         params.put("time_id", reservation.getTime().getId());
         params.put("theme_id", reservation.getTheme().getId());
         params.put("member_id", reservation.getMember().getId());
+        params.put("store_id", reservation.getStore().getId());
 
         Long id = jdbcInsert.executeAndReturnKey(params).longValue();
         return new Reservation(
@@ -108,14 +115,15 @@ public class ReservationDao {
                 reservation.getDate(),
                 reservation.getTime(),
                 reservation.getTheme(),
-                reservation.getMember()
+                reservation.getMember(),
+                reservation.getStore()
         );
     }
 
     public boolean update(Reservation reservation) {
         String sql = """
                 UPDATE reservation
-                SET date = ?, time_id = ?, theme_id = ?, member_id = ?
+                SET date = ?, time_id = ?, theme_id = ?, member_id = ?, store_id = ?
                 WHERE id = ?;
                 """;
 
@@ -125,6 +133,7 @@ public class ReservationDao {
                 reservation.getTime().getId(),
                 reservation.getTheme().getId(),
                 reservation.getMember().getId(),
+                reservation.getStore().getId(),
                 reservation.getId()
         );
 
@@ -174,11 +183,13 @@ public class ReservationDao {
         String sql = """
                 SELECT r.id, r.date,rt.id AS time_id, rt.start_at,
                     t.id AS theme_id, t.name AS theme_name, t.description, t.url,
-                    m.id AS member_id, m.login_id, m.password, m.name AS member_name
+                    m.id AS member_id, m.login_id, m.password, m.name AS member_name, m.role,
+                    s.id AS store_id, s.name AS store_name
                 FROM reservation r
                 INNER JOIN reservation_time rt ON r.time_id = rt.id
                 INNER JOIN theme t ON r.theme_id = t.id
                 INNER JOIN member m ON m.id = r.member_id
+                INNER JOIN store s ON s.id = r.store_id
                 WHERE r.id = ?
                 """;
 

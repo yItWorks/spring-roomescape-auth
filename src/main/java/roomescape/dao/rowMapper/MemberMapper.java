@@ -3,6 +3,7 @@ package roomescape.dao.rowMapper;
 import org.springframework.jdbc.core.RowMapper;
 import roomescape.domain.member.Member;
 import roomescape.domain.member.MemberName;
+import roomescape.domain.member.Role;
 
 public final class MemberMapper {
 
@@ -11,7 +12,8 @@ public final class MemberMapper {
                 rs.getLong("id"),
                 rs.getString("login_id"),
                 rs.getString("password"),
-                MemberName.parse(rs.getString("name"))
+                MemberName.parse(rs.getString("name")),
+                Role.from(rs.getString("role"))
         );
     };
 

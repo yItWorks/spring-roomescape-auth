@@ -9,12 +9,16 @@ import roomescape.common.exception.ConflictException;
 import roomescape.common.exception.ForbiddenException;
 import roomescape.common.exception.NotFoundException;
 import roomescape.common.exception.UnprocessableEntityException;
+import roomescape.dao.ManagerDao;
 import roomescape.dao.MemberDao;
 import roomescape.dao.ReservationDao;
 import roomescape.dao.ReservationTimeDao;
+import roomescape.dao.StoreDao;
 import roomescape.dao.ThemeDao;
-import roomescape.domain.reservation.Reservation;
 import roomescape.domain.member.Member;
+import roomescape.domain.member.manager.Manager;
+import roomescape.domain.reservation.Reservation;
+import roomescape.domain.reservation.store.Store;
 import roomescape.domain.reservation.theme.Theme;
 import roomescape.domain.reservation.time.ReservationTime;
 import roomescape.dto.request.ReservationRequest;
@@ -27,22 +31,34 @@ public class ReservationService {
     private final ThemeDao themeDao;
     private final Clock clock;
     private final MemberDao memberDao;
+    private final ManagerDao managerDao;
+    private final StoreDao storeDao;
 
     public ReservationService(
             ReservationDao reservationDao,
             ReservationTimeDao reservationTimeDao,
             ThemeDao themeDao,
             Clock clock,
-            MemberDao memberDao) {
+            MemberDao memberDao,
+            ManagerDao managerDao,
+            StoreDao storeDao
+    ) {
         this.reservationDao = reservationDao;
         this.reservationTimeDao = reservationTimeDao;
         this.themeDao = themeDao;
         this.clock = clock;
         this.memberDao = memberDao;
+        this.managerDao = managerDao;
+        this.storeDao = storeDao;
     }
 
-    public List<ReservationResponse> findAll() {
-        List<Reservation> reservations = reservationDao.findAll();
+    public List<ReservationResponse> findMyStoreReservations(Long memberId) {
+        Manager manager = managerDao.findByMemberId(memberId)
+                .orElseThrow(() -> new ForbiddenException("권한이 없습니다."));
+
+        Long storeId = manager.getStore().getId();
+
+        List<Reservation> reservations = reservationDao.findAllByStoreId(storeId);
 
         return reservations.stream()
                 .map(ReservationResponse::from)
@@ -90,11 +106,14 @@ public class ReservationService {
         ReservationTime time = reservationTimeDao.findTimeById(request.timeId())
                 .orElseThrow(() -> new NotFoundException("존재하지 않는 시간입니다."));
 
-        Theme theme = themeDao.findThemeById(request.themeId())
+        Theme theme = themeDao.findById(request.themeId())
                 .orElseThrow(() -> new NotFoundException("존재하지 않는 테마입니다."));
 
         Member member = memberDao.findById(request.memberId())
                 .orElseThrow(() -> new NotFoundException("존재하지 않는 사용자입니다."));
+
+        Store store = storeDao.findById(request.storeId())
+                .orElseThrow(() -> new NotFoundException("존재하지 않는 매장입니다."));
 
         validateAvailability(request.date(), time, theme);
 
@@ -103,7 +122,8 @@ public class ReservationService {
                 request.date(),
                 time,
                 theme,
-                member
+                member,
+                store
         );
     }
 
@@ -139,7 +159,7 @@ public class ReservationService {
         }
 
         validatePastTime(origin.getDate(), origin.getTime());
-        
+
         reservationDao.delete(id);
     }
 }
