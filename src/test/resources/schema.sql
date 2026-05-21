@@ -1,7 +1,10 @@
 DROP TABLE IF EXISTS reservation;
-DROP TABLE IF EXISTS reservation_time;
-DROP TABLE IF EXISTS theme;
+DROP TABLE IF EXISTS manager;
+
 DROP TABLE IF EXISTS member;
+DROP TABLE IF EXISTS store;
+DROP TABLE IF EXISTS theme;
+DROP TABLE IF EXISTS reservation_time;
 
 CREATE TABLE IF NOT EXISTS reservation_time
 (
