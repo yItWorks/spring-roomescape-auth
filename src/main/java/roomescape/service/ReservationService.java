@@ -14,7 +14,7 @@ import roomescape.dao.ReservationDao;
 import roomescape.dao.ReservationTimeDao;
 import roomescape.dao.ThemeDao;
 import roomescape.domain.reservation.Reservation;
-import roomescape.domain.reservation.member.Member;
+import roomescape.domain.member.Member;
 import roomescape.domain.reservation.theme.Theme;
 import roomescape.domain.reservation.time.ReservationTime;
 import roomescape.dto.request.ReservationRequest;

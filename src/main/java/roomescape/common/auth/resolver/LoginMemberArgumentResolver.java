@@ -10,7 +10,7 @@ import org.springframework.web.method.support.HandlerMethodArgumentResolver;
 import org.springframework.web.method.support.ModelAndViewContainer;
 import roomescape.common.exception.UnauthorizedException;
 import roomescape.dao.MemberDao;
-import roomescape.domain.reservation.member.Member;
+import roomescape.domain.member.Member;
 
 @Component
 public class LoginMemberArgumentResolver implements HandlerMethodArgumentResolver {

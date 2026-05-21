@@ -1,6 +1,6 @@
 package roomescape.dto.response;
 
-import roomescape.domain.reservation.member.Member;
+import roomescape.domain.member.Member;
 
 public record MemberResponse (
         Long id,

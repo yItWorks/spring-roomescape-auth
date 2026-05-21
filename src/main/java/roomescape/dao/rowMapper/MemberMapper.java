@@ -1,8 +1,8 @@
 package roomescape.dao.rowMapper;
 
 import org.springframework.jdbc.core.RowMapper;
-import roomescape.domain.reservation.member.Member;
-import roomescape.domain.reservation.member.MemberName;
+import roomescape.domain.member.Member;
+import roomescape.domain.member.MemberName;
 
 public final class MemberMapper {
 

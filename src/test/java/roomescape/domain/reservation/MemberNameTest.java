@@ -2,11 +2,11 @@ package roomescape.domain.reservation;
 
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
-import static roomescape.domain.reservation.member.MemberName.NAME_MAX_LENGTH;
+import static roomescape.domain.member.MemberName.NAME_MAX_LENGTH;
 
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
-import roomescape.domain.reservation.member.MemberName;
+import roomescape.domain.member.MemberName;
 
 class MemberNameTest {
 

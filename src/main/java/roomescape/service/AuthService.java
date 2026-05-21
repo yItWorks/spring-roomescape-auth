@@ -5,7 +5,7 @@ import roomescape.common.auth.jwt.TokenProvider;
 import roomescape.common.exception.NotFoundException;
 import roomescape.common.exception.UnauthorizedException;
 import roomescape.dao.MemberDao;
-import roomescape.domain.reservation.member.Member;
+import roomescape.domain.member.Member;
 import roomescape.dto.request.LoginRequest;
 import roomescape.dto.response.LoginResponse;
 

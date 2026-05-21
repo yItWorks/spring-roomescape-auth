@@ -1,4 +1,4 @@
-package roomescape.domain.reservation.member;
+package roomescape.domain.member;
 
 import java.util.Objects;
 
