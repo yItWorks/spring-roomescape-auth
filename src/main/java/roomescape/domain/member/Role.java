@@ -4,19 +4,16 @@ import java.util.Arrays;
 import roomescape.common.exception.NotFoundException;
 
 public enum Role {
-    GENERAL("general"),
-    MANAGER("manager"),
+    GENERAL,
+    MANAGER,
     ;
 
-    private final String roleName;
-
-    Role(String roleName) {
-        this.roleName = roleName;
+    Role() {
     }
 
     public static Role from(String roleName) {
         return Arrays.stream(values())
-                .filter(role -> role.roleName.equals(roleName))
+                .filter(role -> role.name().equalsIgnoreCase(roleName))
                 .findFirst()
                 .orElseThrow(() -> new NotFoundException("적절하지 않은 역할 이름입니다."));
     }
